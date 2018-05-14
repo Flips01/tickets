@@ -130,3 +130,5 @@ fabric.properties
 # Editor-based Rest Client
 .idea/httpRequests
 
+# Keep external libraries
+!/lib/*
