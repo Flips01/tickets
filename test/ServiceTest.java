@@ -8,6 +8,7 @@ import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.empty;
+import static org.hamcrest.Matchers.not;
 import static org.junit.Assert.assertThat;
 
 public class ServiceTest {
@@ -73,6 +74,17 @@ public class ServiceTest {
         insertDefaultCustomer(service);
 
         assertThat(service.getCustomers(), contains(defaultCustomer));
+    }
+
+    @Test
+    public void shouldAllowBookingAllSeats() {
+        insertDefaultCustomer(service);
+        insertDefaultEvent(service);
+
+        Booking booking = service.createBooking(defaultCustomer, defaultEvent, defaultEvent.getSeating());
+
+        assertThat(booking, is(not(nullValue())));
+        assertThat(service.getAvailableSeats(defaultEvent), is(0));
     }
 
     private Event createDefaultEvent() {

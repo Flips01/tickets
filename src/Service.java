@@ -29,4 +29,10 @@ public class Service {
     public List<Customer> getCustomers() {
         return new ArrayList<>(customers);
     }
+
+    public Booking createBooking(Customer customer, Event event, int requestedSeats) {
+        availableSeats.computeIfPresent(event, (e, availableSeats) -> availableSeats - requestedSeats);
+
+        return new Booking(customer, event, requestedSeats, "");
+    }
 }
