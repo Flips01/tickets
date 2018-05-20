@@ -7,27 +7,26 @@ import java.util.Date;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.Matchers.contains;
+import static org.hamcrest.Matchers.empty;
 import static org.junit.Assert.assertThat;
 
 public class ServiceTest {
     private Service service;
     private Event defaultEvent;
+    private Customer defaultCustomer;
 
     @Before
     public void setUp() {
         service = new Service();
         defaultEvent = createDefaultEvent();
+        defaultCustomer = createDefaultCustomert();
     }
 
     @Test
     public void shouldCreateCustomer() {
-        String name = "Olaf";
-        String address = "Street 1";
-        Customer expectedCustomer = new Customer(name, address);
+        Customer insertedCustomer = insertDefaultCustomer(service);
 
-        Customer customer = service.createCustomer(name, address);
-
-        assertThat(customer, is(expectedCustomer));
+        assertThat(insertedCustomer, is(defaultCustomer));
     }
 
     @Test
@@ -39,6 +38,8 @@ public class ServiceTest {
 
     @Test
     public void shouldListAllEvents() {
+        assertThat(service.getEvents(), is(empty()));
+
         insertDefaultEvent(service);
 
         assertThat(service.getEvents(), contains(defaultEvent));
@@ -65,12 +66,22 @@ public class ServiceTest {
         assertThat(service.getAvailableSeats(defaultEvent), is(nullValue()));
     }
 
+    @Test
+    public void shouldListAllCustomers() {
+        assertThat(service.getCustomers(), is(empty()));
+
+        insertDefaultCustomer(service);
+
+        assertThat(service.getCustomers(), contains(defaultCustomer));
+    }
+
     private Event createDefaultEvent() {
         String id = "1234";
         String title = "fun";
         Date date = Date.from(Instant.now());
         int price = 300;
         int seating = 100;
+
         return new Event(id, title, date, price, seating);
     }
 
@@ -81,6 +92,20 @@ public class ServiceTest {
                 defaultEvent.getDate(),
                 defaultEvent.getPrice(),
                 defaultEvent.getSeating()
+        );
+    }
+
+    private Customer createDefaultCustomert() {
+        String name = "Olaf";
+        String address = "Street 1";
+
+        return new Customer(name, address);
+    }
+
+    private Customer insertDefaultCustomer(Service service) {
+        return service.createCustomer(
+                defaultCustomer.getName(),
+                defaultCustomer.getAddress()
         );
     }
 }

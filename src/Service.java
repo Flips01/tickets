@@ -2,10 +2,13 @@ import java.util.*;
 
 public class Service {
     private List<Event> events = new ArrayList<>();
+    private List<Customer> customers = new ArrayList<>();
     private Map<Event, Integer> availableSeats = new HashMap<>();
 
     public Customer createCustomer(String name, String address) {
-        return new Customer(name, address);
+        Customer customer = new Customer(name, address);
+        customers.add(customer);
+        return customer;
     }
 
     public Event createEvent(String id, String title, Date date, int price, int seating) {
@@ -21,5 +24,9 @@ public class Service {
 
     public Integer getAvailableSeats(Event event) {
         return availableSeats.get(event);
+    }
+
+    public List<Customer> getCustomers() {
+        return new ArrayList<>(customers);
     }
 }
