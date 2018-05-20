@@ -1,4 +1,7 @@
+import lombok.Data;
+
+@Data
 public class Customer {
-    public Customer(String name, String address) {
-    }
+    private final String name;
+    private final String address;
 }

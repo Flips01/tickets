@@ -1,12 +1,24 @@
 import org.junit.Test;
 
+import static org.hamcrest.CoreMatchers.*;
 import static org.junit.Assert.*;
 
 public class CustomerTest {
     @Test
-    public void shouldCreate() {
+    public void shouldStoreName() {
         String name = "Olaf";
-        String adress = "Street 1";
-        Customer customer = new Customer(name, adress);
+
+        Customer customer = new Customer(name, "");
+
+        assertThat(customer.getName(), is(name));
+    }
+
+    @Test
+    public void shouldStoreAddress() {
+        String address = "Street 1";
+
+        Customer customer = new Customer("", address);
+
+        assertThat(customer.getAddress(), is(address));
     }
 }

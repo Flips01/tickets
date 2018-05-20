@@ -1,7 +1,12 @@
+import lombok.Data;
+
 import java.util.Date;
 
+@Data
 public class Event {
-    public Event(String id, String title, Date date, int price, int seating) {
-
-    }
+    private final String id;
+    private final String title;
+    private final Date date;
+    private final int price;
+    private final int seating;
 }
