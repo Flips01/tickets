@@ -1,9 +1,12 @@
+import org.junit.Assert;
 import org.junit.Test;
 
 import java.time.Instant;
 import java.util.Date;
 
 import static org.hamcrest.CoreMatchers.*;
+import static org.hamcrest.Matchers.contains;
+import static org.hamcrest.Matchers.empty;
 import static org.junit.Assert.*;
 
 public class ServiceTest {
@@ -32,5 +35,23 @@ public class ServiceTest {
         Event event = service.createEvent(id, title, date, price, seating);
 
         assertThat(event, is(expectedEvent));
+    }
+    
+    @Test
+    public void shouldListAllEvents() {
+        Service service = new Service();
+
+        assertThat(service.getEvents(), is(empty()));
+
+        String id = "1234";
+        String title = "fun";
+        Date date = Date.from(Instant.now());
+        int price = 300;
+        int seating = 100;
+        Event expectedEvent = new Event(id, title, date, price, seating);
+
+        service.createEvent(id, title, date, price, seating);
+
+        assertThat(service.getEvents(), contains(expectedEvent));
     }
 }
