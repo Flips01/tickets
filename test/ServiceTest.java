@@ -1,16 +1,26 @@
+import org.junit.Before;
 import org.junit.Test;
 
 import java.time.Instant;
 import java.util.Date;
 
-import static org.hamcrest.CoreMatchers.*;
+import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.Matchers.contains;
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertThat;
 
 public class ServiceTest {
+    private Service service;
+    private Event defaultEvent;
+
+    @Before
+    public void setUp() {
+        service = new Service();
+        defaultEvent = createDefaultEvent();
+    }
+
     @Test
     public void shouldCreateCustomer() {
-        Service service = new Service();
         String name = "Olaf";
         String address = "Street 1";
         Customer expectedCustomer = new Customer(name, address);
@@ -22,46 +32,23 @@ public class ServiceTest {
 
     @Test
     public void shouldCreateEvent() {
-        Service service = new Service();
-        String id = "1234";
-        String title = "fun";
-        Date date = Date.from(Instant.now());
-        int price = 300;
-        int seating = 100;
-        Event expectedEvent = new Event(id, title, date, price, seating);
-
-        Event event = service.createEvent(id, title, date, price, seating);
-
-        assertThat(event, is(expectedEvent));
+        Event insertedEvent = insertDefaultEvent(service);
+        
+        assertThat(insertedEvent, is(defaultEvent));
     }
 
     @Test
     public void shouldListAllEvents() {
-        Service service = new Service();
-        String id = "1234";
-        String title = "fun";
-        Date date = Date.from(Instant.now());
-        int price = 300;
-        int seating = 100;
-        Event expectedEvent = new Event(id, title, date, price, seating);
+        insertDefaultEvent(service);
 
-        service.createEvent(id, title, date, price, seating);
-
-        assertThat(service.getEvents(), contains(expectedEvent));
+        assertThat(service.getEvents(), contains(defaultEvent));
     }
 
     @Test
     public void shouldShowAvailableSeats() {
-        Service service = new Service();
-        String id = "1234";
-        String title = "fun";
-        Date date = Date.from(Instant.now());
-        int price = 300;
-        int seating = 100;
+        Event event = insertDefaultEvent(service);
 
-        Event event = service.createEvent(id, title, date, price, seating);
-
-        assertThat(service.getAvailableSeats(event), is(seating));
+        assertThat(service.getAvailableSeats(event), is(defaultEvent.getSeating()));
     }
 
     @Test
@@ -74,13 +61,26 @@ public class ServiceTest {
     @Test
     public void shouldShowAvailableSeatsNonExistingEvent() {
         Service service = new Service();
+
+        assertThat(service.getAvailableSeats(defaultEvent), is(nullValue()));
+    }
+
+    private Event createDefaultEvent() {
         String id = "1234";
         String title = "fun";
         Date date = Date.from(Instant.now());
         int price = 300;
         int seating = 100;
-        Event event = new Event(id, title, date, price, seating);
+        return new Event(id, title, date, price, seating);
+    }
 
-        assertThat(service.getAvailableSeats(event), is(nullValue()));
+    private Event insertDefaultEvent(Service service) {
+        return service.createEvent(
+                defaultEvent.getId(),
+                defaultEvent.getTitle(),
+                defaultEvent.getDate(),
+                defaultEvent.getPrice(),
+                defaultEvent.getSeating()
+        );
     }
 }
