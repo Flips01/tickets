@@ -10,4 +10,5 @@ public class Event implements Serializable {
     private final Date date;
     private final int price;
     private final int seating;
+    private final String organizerEmail;
 }

@@ -1,10 +1,9 @@
+import org.hamcrest.CoreMatchers;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.awt.print.Book;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
-import java.io.IOException;
 import java.time.Instant;
 import java.util.Date;
 
@@ -12,7 +11,13 @@ import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.Matchers.*;
 import static org.junit.Assert.assertThat;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 public class ServiceTest {
     private Service service;
@@ -159,7 +164,7 @@ public class ServiceTest {
         insertDefaultCustomer(service);
         insertDefaultEvent(service);
 
-        Event secondEvent = service.createEvent("123", "test", Date.from(Instant.now()), 100, 100);
+        Event secondEvent = service.createEvent("123", "test", Date.from(Instant.now()), 100, 100, "");
 
         Booking firstBooking = service.createBooking(defaultCustomer, defaultEvent, defaultEvent.getSeating());
         Booking secondBooking = service.createBooking(defaultCustomer, secondEvent, secondEvent.getSeating());
@@ -229,14 +234,51 @@ public class ServiceTest {
         assertThat(loadedService, is(service));
     }
 
+    @Test(expected = BlackListException.class)
+    public void shouldFailOnBlacklist() throws Exception {
+        BlackListService blackListService = mock(BlackListService.class);
+        when(blackListService.isCustomerBlacklisted(defaultCustomer)).thenReturn(true);
+        service.setBlacklistService(blackListService);
+        insertDefaultCustomer(service);
+        insertDefaultEvent(service);
+
+        service.createBooking(defaultCustomer, defaultEvent, defaultEvent.getSeating());
+    }
+
+    @Test
+    public void shouldQueryBlacklist() throws Exception {
+        BlackListService blackListService = mock(BlackListService.class);
+        when(blackListService.isCustomerBlacklisted(defaultCustomer)).thenReturn(false);
+        service.setBlacklistService(blackListService);
+        insertDefaultCustomer(service);
+        insertDefaultEvent(service);
+
+        service.createBooking(defaultCustomer, defaultEvent, defaultEvent.getSeating());
+
+        verify(blackListService).isCustomerBlacklisted(defaultCustomer);
+    }
+
+    @Test
+    public void shouldSendEmailOn10PercentSeats() throws Exception {
+        MailService mailService = mock(MailService.class);
+        service.setMailService(mailService);
+        insertDefaultCustomer(service);
+        insertDefaultEvent(service);
+
+        service.createBooking(defaultCustomer, defaultEvent, defaultEvent.getSeating());
+
+        verify(mailService).sendMail(eq(defaultEvent.getOrganizerEmail()), anyString());
+    }
+
     private Event createDefaultEvent() {
         String id = "1234";
         String title = "fun";
         Date date = Date.from(Instant.now());
         int price = 300;
         int seating = 100;
+        String organizerEmail = "";
 
-        return new Event(id, title, date, price, seating);
+        return new Event(id, title, date, price, seating, organizerEmail);
     }
 
     private Event insertDefaultEvent(Service service) {
@@ -245,7 +287,8 @@ public class ServiceTest {
                 defaultEvent.getTitle(),
                 defaultEvent.getDate(),
                 defaultEvent.getPrice(),
-                defaultEvent.getSeating()
+                defaultEvent.getSeating(),
+                defaultEvent.getOrganizerEmail()
         );
     }
 

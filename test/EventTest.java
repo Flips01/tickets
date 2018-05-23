@@ -13,6 +13,8 @@ public class EventTest {
         Date date = Date.from(Instant.now());
         int price = 300;
         int seating = 100;
-        Event event = new Event(id, title, date, price, seating);
+        String organizerEmail = "";
+
+        Event event = new Event(id, title, date, price, seating, organizerEmail);
     }
 }

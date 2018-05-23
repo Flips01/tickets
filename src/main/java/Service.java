@@ -12,6 +12,8 @@ public class Service implements Serializable {
     private List<Event> events = new ArrayList<>();
     private List<Customer> customers = new ArrayList<>();
     private List<Booking> bookings = new ArrayList<>();
+    private BlackListService blackListService;
+    private MailService mailService;
 
     public static Service load(InputStream inputStream) throws IOException, ClassNotFoundException {
         try (ObjectInputStream ois = new ObjectInputStream(inputStream)) {
@@ -25,8 +27,8 @@ public class Service implements Serializable {
         return customer;
     }
 
-    public Event createEvent(String id, String title, Date date, int price, int seating) {
-        Event event = new Event(id, title, date, price, seating);
+    public Event createEvent(String id, String title, Date date, int price, int seating, String organizerEmail) {
+        Event event = new Event(id, title, date, price, seating, organizerEmail);
         events.add(event);
         return event;
     }
@@ -83,6 +85,14 @@ public class Service implements Serializable {
             throw new Exception();
         }
 
+        if (blackListService != null && blackListService.isCustomerBlacklisted(customer)) {
+            throw new BlackListException();
+        }
+
+        if (mailService != null && requestedSeats >= event.getSeating() * 0.1) {
+            mailService.sendMail(event.getOrganizerEmail(), "");
+        }
+
         Booking oldBooking = getCustomerBookingForEvent(customer, event);
         int usedSeats = requestedSeats;
         if (oldBooking != null) {
@@ -113,5 +123,13 @@ public class Service implements Serializable {
         try (ObjectOutputStream oos = new ObjectOutputStream(outputStream)) {
             oos.writeObject(this);
         }
+    }
+
+    public void setBlacklistService(BlackListService blackListService) {
+        this.blackListService = blackListService;
+    }
+
+    public void setMailService(MailService mailService) {
+        this.mailService = mailService;
     }
 }
