@@ -1,9 +1,23 @@
-import java.util.*;
+import com.sun.javaws.exceptions.InvalidArgumentException;
+import lombok.EqualsAndHashCode;
+import lombok.ToString;
 
-public class Service {
+import java.io.*;
+import java.util.*;
+import java.util.concurrent.ThreadLocalRandom;
+
+@ToString
+@EqualsAndHashCode
+public class Service implements Serializable {
     private List<Event> events = new ArrayList<>();
     private List<Customer> customers = new ArrayList<>();
-    private Map<Event, Integer> availableSeats = new HashMap<>();
+    private List<Booking> bookings = new ArrayList<>();
+
+    public static Service load(InputStream inputStream) throws IOException, ClassNotFoundException {
+        try (ObjectInputStream ois = new ObjectInputStream(inputStream)) {
+            return (Service) ois.readObject();
+        }
+    }
 
     public Customer createCustomer(String name, String address) {
         Customer customer = new Customer(name, address);
@@ -14,7 +28,6 @@ public class Service {
     public Event createEvent(String id, String title, Date date, int price, int seating) {
         Event event = new Event(id, title, date, price, seating);
         events.add(event);
-        availableSeats.put(event, event.getSeating());
         return event;
     }
 
@@ -22,17 +35,83 @@ public class Service {
         return new ArrayList<>(events);
     }
 
-    public Integer getAvailableSeats(Event event) {
-        return availableSeats.get(event);
+    public Integer getAvailableSeats(Event event) throws Exception {
+        if (!isRegisteredEvent(event)) {
+            throw new Exception();
+        }
+
+        int usedSeats = 0;
+        for (Booking booking : bookings) {
+            if (booking.getEvent().equals(event)) {
+                usedSeats += booking.getSeats();
+            }
+        }
+
+        return event.getSeating() - usedSeats;
     }
 
     public List<Customer> getCustomers() {
         return new ArrayList<>(customers);
     }
 
-    public Booking createBooking(Customer customer, Event event, int requestedSeats) {
-        availableSeats.computeIfPresent(event, (e, availableSeats) -> availableSeats - requestedSeats);
+    private boolean isRegisteredCustomer(Customer customer) {
+        for (Customer c : customers) {
+            if (c.equals(customer)) {
+                return true;
+            }
+        }
 
-        return new Booking(customer, event, requestedSeats, "");
+        return false;
+    }
+
+    private boolean isRegisteredEvent(Event event) {
+        for (Event e : events) {
+            if (e.equals(event)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    public Booking createBooking(Customer customer, Event event, int requestedSeats) throws Exception {
+        if (!isRegisteredCustomer(customer) || !isRegisteredEvent(event)) {
+            throw new Exception();
+        }
+
+        if (getAvailableSeats(event) < requestedSeats) {
+            throw new Exception();
+        }
+
+        Booking oldBooking = getCustomerBookingForEvent(customer, event);
+        int usedSeats = requestedSeats;
+        if (oldBooking != null) {
+            usedSeats += oldBooking.getSeats();
+            bookings.remove(oldBooking);
+        }
+
+        Booking booking = new Booking(customer, event, usedSeats, String.valueOf(ThreadLocalRandom.current().nextInt(0, 9999)));
+        bookings.add(booking);
+        return booking;
+    }
+
+    public Booking getCustomerBookingForEvent(Customer customer, Event event) throws Exception {
+        if (!isRegisteredCustomer(customer) || !isRegisteredEvent(event)) {
+            throw new Exception();
+        }
+
+        for (Booking booking : bookings) {
+            if (booking.getEvent().equals(event) && booking.getCustomer().equals(customer)) {
+                return booking;
+            }
+        }
+
+        return null;
+    }
+
+    public void persist(OutputStream outputStream) throws IOException {
+        try (ObjectOutputStream oos = new ObjectOutputStream(outputStream)) {
+            oos.writeObject(this);
+        }
     }
 }

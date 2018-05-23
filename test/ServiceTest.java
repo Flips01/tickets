@@ -1,15 +1,18 @@
 import org.junit.Before;
 import org.junit.Test;
 
+import java.awt.print.Book;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.time.Instant;
 import java.util.Date;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.nullValue;
-import static org.hamcrest.Matchers.contains;
-import static org.hamcrest.Matchers.empty;
-import static org.hamcrest.Matchers.not;
+import static org.hamcrest.Matchers.*;
 import static org.junit.Assert.assertThat;
+import static org.junit.Assert.fail;
 
 public class ServiceTest {
     private Service service;
@@ -20,7 +23,7 @@ public class ServiceTest {
     public void setUp() {
         service = new Service();
         defaultEvent = createDefaultEvent();
-        defaultCustomer = createDefaultCustomert();
+        defaultCustomer = createDefaultCustomer();
     }
 
     @Test
@@ -33,7 +36,7 @@ public class ServiceTest {
     @Test
     public void shouldCreateEvent() {
         Event insertedEvent = insertDefaultEvent(service);
-        
+
         assertThat(insertedEvent, is(defaultEvent));
     }
 
@@ -47,24 +50,37 @@ public class ServiceTest {
     }
 
     @Test
-    public void shouldShowAvailableSeats() {
-        Event event = insertDefaultEvent(service);
+    public void shouldShowAvailableSeats() throws Exception {
+        insertDefaultEvent(service);
 
-        assertThat(service.getAvailableSeats(event), is(defaultEvent.getSeating()));
+        assertThat(service.getAvailableSeats(defaultEvent), is(defaultEvent.getSeating()));
     }
 
     @Test
-    public void shouldShowAvailableSeatsNullEvent() {
-        Service service = new Service();
+    public void shouldShowAvailableSeatsWithBooking() throws Exception {
+        insertDefaultEvent(service);
+        insertDefaultCustomer(service);
 
-        assertThat(service.getAvailableSeats(null), is(nullValue()));
+        Booking booking = service.createBooking(defaultCustomer, defaultEvent, 2);
+
+
+        assertThat(service.getAvailableSeats(defaultEvent), is(defaultEvent.getSeating() - 2));
     }
 
     @Test
-    public void shouldShowAvailableSeatsNonExistingEvent() {
-        Service service = new Service();
+    public void shouldShowAvailableSeatsWithMultipleBooking() throws Exception {
+        insertDefaultEvent(service);
+        insertDefaultCustomer(service);
 
-        assertThat(service.getAvailableSeats(defaultEvent), is(nullValue()));
+        service.createBooking(defaultCustomer, defaultEvent, 2);
+        service.createBooking(defaultCustomer, defaultEvent, 2);
+
+        assertThat(service.getAvailableSeats(defaultEvent), is(defaultEvent.getSeating() - 4));
+    }
+
+    @Test(expected = Exception.class)
+    public void shouldShowAvailableSeatsNonExistingEvent() throws Exception {
+        service.getAvailableSeats(defaultEvent);
     }
 
     @Test
@@ -77,7 +93,7 @@ public class ServiceTest {
     }
 
     @Test
-    public void shouldAllowBookingAllSeats() {
+    public void shouldAllowBookingAllSeats() throws Exception {
         insertDefaultCustomer(service);
         insertDefaultEvent(service);
 
@@ -85,6 +101,132 @@ public class ServiceTest {
 
         assertThat(booking, is(not(nullValue())));
         assertThat(service.getAvailableSeats(defaultEvent), is(0));
+    }
+
+    @Test
+    public void shouldGetCustomerEventBooking() throws Exception {
+        insertDefaultCustomer(service);
+        insertDefaultEvent(service);
+
+        Booking booking = service.createBooking(defaultCustomer, defaultEvent, defaultEvent.getSeating());
+
+        Booking result = service.getCustomerBookingForEvent(defaultCustomer, defaultEvent);
+        assertThat(result, is(booking));
+    }
+
+    @Test
+    public void shouldGetCustomerEventBookingNull() throws Exception {
+        insertDefaultCustomer(service);
+        insertDefaultEvent(service);
+
+        Booking result = service.getCustomerBookingForEvent(defaultCustomer, defaultEvent);
+        assertThat(result, is(nullValue()));
+    }
+
+    @Test(expected = Exception.class)
+    public void shouldFailWhenCreateBookingForNotRegisteredCustomer() throws Exception {
+        insertDefaultEvent(service);
+
+        service.createBooking(defaultCustomer, defaultEvent, defaultEvent.getSeating());
+    }
+
+    @Test(expected = Exception.class)
+    public void shouldFailWhenCreateBookingForNotRegisteredEvent() throws Exception {
+        insertDefaultCustomer(service);
+
+        service.createBooking(defaultCustomer, defaultEvent, defaultEvent.getSeating());
+    }
+
+    @Test
+    public void shouldGetCustomerEventBookingFromMultipleCustomers() throws Exception {
+        insertDefaultCustomer(service);
+        insertDefaultEvent(service);
+
+        Booking firstBooking = service.createBooking(defaultCustomer, defaultEvent, 1);
+
+        Customer customer = service.createCustomer("mueller", "strasse 123");
+        Booking secondBooking = service.createBooking(customer, defaultEvent, 1);
+
+        Booking result = service.getCustomerBookingForEvent(defaultCustomer, defaultEvent);
+        assertThat(result, is(firstBooking));
+
+        result = service.getCustomerBookingForEvent(customer, defaultEvent);
+        assertThat(result, is(secondBooking));
+    }
+
+    @Test
+    public void shouldGetCustomerEventBookingFromMultipleEvents() throws Exception {
+        insertDefaultCustomer(service);
+        insertDefaultEvent(service);
+
+        Event secondEvent = service.createEvent("123", "test", Date.from(Instant.now()), 100, 100);
+
+        Booking firstBooking = service.createBooking(defaultCustomer, defaultEvent, defaultEvent.getSeating());
+        Booking secondBooking = service.createBooking(defaultCustomer, secondEvent, secondEvent.getSeating());
+
+
+        Booking result = service.getCustomerBookingForEvent(defaultCustomer, defaultEvent);
+        assertThat(result, is(firstBooking));
+
+        result = service.getCustomerBookingForEvent(defaultCustomer, secondEvent);
+        assertThat(result, is(secondBooking));
+    }
+
+
+    @Test(expected = Exception.class)
+    public void shouldFailWhenGetBookingForNotRegisteredCustomer() throws Exception {
+        insertDefaultEvent(service);
+
+        service.getCustomerBookingForEvent(defaultCustomer, defaultEvent);
+    }
+
+    @Test(expected = Exception.class)
+    public void shouldFailWhenGetBookingForNotRegisteredEvent() throws Exception {
+        insertDefaultCustomer(service);
+
+        service.getCustomerBookingForEvent(defaultCustomer, defaultEvent);
+    }
+
+    @Test
+    public void shouldCombineBookings() throws Exception {
+        insertDefaultCustomer(service);
+        insertDefaultEvent(service);
+
+        Booking firstBooking = service.createBooking(defaultCustomer, defaultEvent, 1);
+        Booking secondBooking = service.createBooking(defaultCustomer, defaultEvent, 1);
+
+        assertThat(firstBooking, is(not(secondBooking)));
+        assertThat(secondBooking.getSeats(), is(2));
+        assertThat(firstBooking.getId(), is(not(secondBooking.getId())));
+    }
+
+    @Test
+    public void shouldRejectBookingWhenNoSeatsAreAvailable() throws Exception {
+        insertDefaultCustomer(service);
+        insertDefaultEvent(service);
+
+        service.createBooking(defaultCustomer, defaultEvent, defaultEvent.getSeating());
+        try {
+            service.createBooking(defaultCustomer, defaultEvent, 1);
+            fail();
+        } catch (Exception ignored) {
+        }
+    }
+
+    @Test
+    public void shouldPersistService() throws Exception {
+        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+        insertDefaultCustomer(service);
+        insertDefaultEvent(service);
+        service.createBooking(defaultCustomer, defaultEvent, defaultEvent.getSeating());
+
+        service.persist(outputStream);
+
+        ByteArrayInputStream inputStream = new ByteArrayInputStream(outputStream.toByteArray());
+
+        Service loadedService = Service.load(inputStream);
+
+        assertThat(loadedService, is(service));
     }
 
     private Event createDefaultEvent() {
@@ -107,7 +249,7 @@ public class ServiceTest {
         );
     }
 
-    private Customer createDefaultCustomert() {
+    private Customer createDefaultCustomer() {
         String name = "Olaf";
         String address = "Street 1";
 
