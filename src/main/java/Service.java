@@ -1,17 +1,18 @@
-import com.sun.javaws.exceptions.InvalidArgumentException;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
 
 import java.io.*;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
 
 @ToString
 @EqualsAndHashCode
 public class Service implements Serializable {
-    private List<Event> events = new ArrayList<>();
-    private List<Customer> customers = new ArrayList<>();
-    private List<Booking> bookings = new ArrayList<>();
+    private final List<Event> events = new ArrayList<>();
+    private final List<Customer> customers = new ArrayList<>();
+    private final List<Booking> bookings = new ArrayList<>();
     private BlackListService blackListService;
     private MailService mailService;
 
@@ -38,7 +39,7 @@ public class Service implements Serializable {
     }
 
     public Integer getAvailableSeats(Event event) throws Exception {
-        if (!isRegisteredEvent(event)) {
+        if (isUnregisteredEvent(event)) {
             throw new Exception();
         }
 
@@ -56,28 +57,17 @@ public class Service implements Serializable {
         return new ArrayList<>(customers);
     }
 
-    private boolean isRegisteredCustomer(Customer customer) {
-        for (Customer c : customers) {
-            if (c.equals(customer)) {
-                return true;
-            }
-        }
-
-        return false;
+    private boolean isUnregisteredCustomer(Customer customer) {
+        return customers.stream().noneMatch(customer::equals);
     }
 
-    private boolean isRegisteredEvent(Event event) {
-        for (Event e : events) {
-            if (e.equals(event)) {
-                return true;
-            }
-        }
+    private boolean isUnregisteredEvent(Event event) {
+        return events.stream().noneMatch(event::equals);
 
-        return false;
     }
 
     public Booking createBooking(Customer customer, Event event, int requestedSeats) throws Exception {
-        if (!isRegisteredCustomer(customer) || !isRegisteredEvent(event)) {
+        if (isUnregisteredCustomer(customer) || isUnregisteredEvent(event)) {
             throw new Exception();
         }
 
@@ -106,7 +96,7 @@ public class Service implements Serializable {
     }
 
     public Booking getCustomerBookingForEvent(Customer customer, Event event) throws Exception {
-        if (!isRegisteredCustomer(customer) || !isRegisteredEvent(event)) {
+        if (isUnregisteredCustomer(customer) || isUnregisteredEvent(event)) {
             throw new Exception();
         }
 

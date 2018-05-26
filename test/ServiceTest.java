@@ -1,4 +1,3 @@
-import org.hamcrest.CoreMatchers;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -9,15 +8,13 @@ import java.util.Date;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.nullValue;
+import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.*;
 import static org.junit.Assert.assertThat;
-import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 public class ServiceTest {
     private Service service;
@@ -62,12 +59,11 @@ public class ServiceTest {
     }
 
     @Test
-    public void shouldShowAvailableSeatsWithBooking() throws Exception {
+    public void shouldAlterAvailableSeatsAfterBooking() throws Exception {
         insertDefaultEvent(service);
         insertDefaultCustomer(service);
 
-        Booking booking = service.createBooking(defaultCustomer, defaultEvent, 2);
-
+        service.createBooking(defaultCustomer, defaultEvent, 2);
 
         assertThat(service.getAvailableSeats(defaultEvent), is(defaultEvent.getSeating() - 2));
     }
