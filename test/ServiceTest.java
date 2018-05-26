@@ -63,7 +63,7 @@ public class ServiceTest {
     }
 
     @Test
-    public void shouldAlterAvailableSeatsAfterBooking() throws Exception {
+    public void shoulShowAvailableSeatsAfterBooking() throws Exception {
         insertDefaultEvent(service);
         insertDefaultCustomer(service);
 
