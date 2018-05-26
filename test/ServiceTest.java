@@ -1,5 +1,7 @@
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -20,6 +22,9 @@ public class ServiceTest {
     private Service service;
     private Event defaultEvent;
     private Customer defaultCustomer;
+
+    @Rule
+    public ExpectedException thrown = ExpectedException.none();
 
     @Before
     public void setUp() {
@@ -207,11 +212,9 @@ public class ServiceTest {
         insertDefaultEvent(service);
 
         service.createBooking(defaultCustomer, defaultEvent, defaultEvent.getSeating());
-        try {
-            service.createBooking(defaultCustomer, defaultEvent, 1);
-            fail();
-        } catch (Exception ignored) {
-        }
+
+        thrown.expect(Exception.class);
+        service.createBooking(defaultCustomer, defaultEvent, 1);
     }
 
     @Test
