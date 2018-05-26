@@ -39,7 +39,7 @@ public class Service implements Serializable {
     }
 
     public Integer getAvailableSeats(Event event) throws Exception {
-        if (isUnregisteredEvent(event)) {
+        if (isNotRegistered(event)) {
             throw new Exception();
         }
 
@@ -57,17 +57,17 @@ public class Service implements Serializable {
         return new ArrayList<>(customers);
     }
 
-    private boolean isUnregisteredCustomer(Customer customer) {
+    private boolean isNotRegistered(Customer customer) {
         return customers.stream().noneMatch(customer::equals);
     }
 
-    private boolean isUnregisteredEvent(Event event) {
+    private boolean isNotRegistered(Event event) {
         return events.stream().noneMatch(event::equals);
 
     }
 
     public Booking createBooking(Customer customer, Event event, int requestedSeats) throws Exception {
-        if (isUnregisteredCustomer(customer) || isUnregisteredEvent(event)) {
+        if (isNotRegistered(customer) || isNotRegistered(event)) {
             throw new Exception();
         }
 
@@ -96,7 +96,7 @@ public class Service implements Serializable {
     }
 
     public Booking getCustomerBookingForEvent(Customer customer, Event event) throws Exception {
-        if (isUnregisteredCustomer(customer) || isUnregisteredEvent(event)) {
+        if (isNotRegistered(customer) || isNotRegistered(event)) {
             throw new Exception();
         }
 
