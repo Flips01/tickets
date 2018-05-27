@@ -113,8 +113,8 @@ public class ServiceTest {
         assertThat(service.getAvailableSeats(defaultEvent), is(defaultEvent.getSeating() - 4));
     }
 
-    @Test(expected = Exception.class)
-    public void shouldShowAvailableSeatsNonExistingEvent() throws Exception {
+    @Test(expected = NotRegisteredException.class)
+    public void shouldFailOnShowAvailableSeatsWithNotRegisteredEvent() throws Exception {
         service.getAvailableSeats(defaultEvent);
     }
 
@@ -158,14 +158,14 @@ public class ServiceTest {
         assertThat(result, is(nullValue()));
     }
 
-    @Test(expected = Exception.class)
+    @Test(expected = NotRegisteredException.class)
     public void shouldFailWhenCreateBookingForNotRegisteredCustomer() throws Exception {
         insertDefaultEvent(service);
 
         service.createBooking(defaultCustomer, defaultEvent, defaultEvent.getSeating());
     }
 
-    @Test(expected = Exception.class)
+    @Test(expected = NotRegisteredException.class)
     public void shouldFailWhenCreateBookingForNotRegisteredEvent() throws Exception {
         insertDefaultCustomer(service);
 
@@ -206,14 +206,14 @@ public class ServiceTest {
         assertThat(result, is(secondBooking));
     }
 
-    @Test(expected = Exception.class)
+    @Test(expected = NotRegisteredException.class)
     public void shouldFailWhenGetBookingForNotRegisteredCustomer() throws Exception {
         insertDefaultEvent(service);
 
         service.getCustomerBookingForEvent(defaultCustomer, defaultEvent);
     }
 
-    @Test(expected = Exception.class)
+    @Test(expected = NotRegisteredException.class)
     public void shouldFailWhenGetBookingForNotRegisteredEvent() throws Exception {
         insertDefaultCustomer(service);
 
