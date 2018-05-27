@@ -63,7 +63,7 @@ public class ServiceTest {
     }
 
     @Test
-    public void shoulShowAvailableSeatsAfterBooking() throws Exception {
+    public void shouldShowAvailableSeatsAfterBooking() throws Exception {
         insertDefaultEvent(service);
         insertDefaultCustomer(service);
 
@@ -149,7 +149,7 @@ public class ServiceTest {
 
         Booking firstBooking = service.createBooking(defaultCustomer, defaultEvent, 1);
 
-        Customer customer = service.createCustomer("mueller", "strasse 123");
+        Customer customer = service.registerCustomer("mueller", "strasse 123");
         Booking secondBooking = service.createBooking(customer, defaultEvent, 1);
 
         Booking result = service.getCustomerBookingForEvent(defaultCustomer, defaultEvent);
@@ -164,11 +164,10 @@ public class ServiceTest {
         insertDefaultCustomer(service);
         insertDefaultEvent(service);
 
-        Event secondEvent = service.createEvent("123", "test", Date.from(Instant.now()), 100, 100, "");
+        Event secondEvent = service.registerEvent("123", "test", Date.from(Instant.now()), 100, 100, "");
 
         Booking firstBooking = service.createBooking(defaultCustomer, defaultEvent, defaultEvent.getSeating());
         Booking secondBooking = service.createBooking(defaultCustomer, secondEvent, secondEvent.getSeating());
-
 
         Booking result = service.getCustomerBookingForEvent(defaultCustomer, defaultEvent);
         assertThat(result, is(firstBooking));
@@ -176,7 +175,6 @@ public class ServiceTest {
         result = service.getCustomerBookingForEvent(defaultCustomer, secondEvent);
         assertThat(result, is(secondBooking));
     }
-
 
     @Test(expected = Exception.class)
     public void shouldFailWhenGetBookingForNotRegisteredCustomer() throws Exception {
@@ -234,22 +232,22 @@ public class ServiceTest {
 
     @Test
     public void shouldQueryBlacklist() throws Exception {
-        BlackListService blackListService = mock(BlackListService.class);
-        when(blackListService.isCustomerBlacklisted(defaultCustomer)).thenReturn(false);
-        service.setBlacklistService(blackListService);
+        BlacklistService blacklistService = mock(BlacklistService.class);
+        when(blacklistService.isCustomerBlacklisted(defaultCustomer)).thenReturn(false);
+        service.setBlacklistService(blacklistService);
         insertDefaultCustomer(service);
         insertDefaultEvent(service);
 
         service.createBooking(defaultCustomer, defaultEvent, defaultEvent.getSeating());
 
-        verify(blackListService).isCustomerBlacklisted(defaultCustomer);
+        verify(blacklistService).isCustomerBlacklisted(defaultCustomer);
     }
 
     @Test(expected = BlackListException.class)
-    public void shouldFailOnBlacklist() throws Exception {
-        BlackListService blackListService = mock(BlackListService.class);
-        when(blackListService.isCustomerBlacklisted(defaultCustomer)).thenReturn(true);
-        service.setBlacklistService(blackListService);
+    public void shouldFailOnBlacklistedCustomer() throws Exception {
+        BlacklistService blacklistService = mock(BlacklistService.class);
+        when(blacklistService.isCustomerBlacklisted(defaultCustomer)).thenReturn(true);
+        service.setBlacklistService(blacklistService);
         insertDefaultCustomer(service);
         insertDefaultEvent(service);
 
@@ -292,7 +290,7 @@ public class ServiceTest {
     }
 
     private Event insertDefaultEvent(Service service) {
-        return service.createEvent(
+        return service.registerEvent(
                 defaultEvent.getId(),
                 defaultEvent.getTitle(),
                 defaultEvent.getDate(),
@@ -310,7 +308,7 @@ public class ServiceTest {
     }
 
     private Customer insertDefaultCustomer(Service service) {
-        return service.createCustomer(
+        return service.registerCustomer(
                 defaultCustomer.getName(),
                 defaultCustomer.getAddress()
         );

@@ -1,4 +1,6 @@
 import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.Setter;
 import lombok.ToString;
 
 import java.io.*;
@@ -13,7 +15,13 @@ public class Service implements Serializable {
     private final List<Event> events = new ArrayList<>();
     private final List<Customer> customers = new ArrayList<>();
     private final List<Booking> bookings = new ArrayList<>();
-    private BlackListService blackListService;
+
+    @Setter
+    @Getter
+    private BlacklistService blacklistService;
+
+    @Setter
+    @Getter
     private MailService mailService;
 
     public static Service load(InputStream inputStream) throws IOException, ClassNotFoundException {
@@ -22,13 +30,13 @@ public class Service implements Serializable {
         }
     }
 
-    public Customer createCustomer(String name, String address) {
+    public Customer registerCustomer(String name, String address) {
         Customer customer = new Customer(name, address);
         customers.add(customer);
         return customer;
     }
 
-    public Event createEvent(String id, String title, Date date, int price, int seating, String organizerEmail) {
+    public Event registerEvent(String id, String title, Date date, int price, int seating, String organizerEmail) {
         Event event = new Event(id, title, date, price, seating, organizerEmail);
         events.add(event);
         return event;
@@ -43,12 +51,11 @@ public class Service implements Serializable {
             throw new Exception();
         }
 
-        int usedSeats = 0;
-        for (Booking booking : bookings) {
-            if (booking.getEvent().equals(event)) {
-                usedSeats += booking.getSeats();
-            }
-        }
+        int usedSeats = bookings
+                .stream()
+                .filter(booking -> booking.getEvent().equals(event))
+                .mapToInt(Booking::getSeats)
+                .sum();
 
         return event.getSeating() - usedSeats;
     }
@@ -75,7 +82,7 @@ public class Service implements Serializable {
             throw new Exception();
         }
 
-        if (blackListService != null && blackListService.isCustomerBlacklisted(customer)) {
+        if (blacklistService != null && blacklistService.isCustomerBlacklisted(customer)) {
             throw new BlackListException();
         }
 
@@ -100,26 +107,16 @@ public class Service implements Serializable {
             throw new Exception();
         }
 
-        for (Booking booking : bookings) {
-            if (booking.getEvent().equals(event) && booking.getCustomer().equals(customer)) {
-                return booking;
-            }
-        }
-
-        return null;
+        return bookings
+                .stream()
+                .filter(booking -> booking.getEvent().equals(event) && booking.getCustomer().equals(customer))
+                .findFirst()
+                .orElse(null);
     }
 
     public void persist(OutputStream outputStream) throws IOException {
         try (ObjectOutputStream oos = new ObjectOutputStream(outputStream)) {
             oos.writeObject(this);
         }
-    }
-
-    public void setBlacklistService(BlackListService blackListService) {
-        this.blackListService = blackListService;
-    }
-
-    public void setMailService(MailService mailService) {
-        this.mailService = mailService;
     }
 }
