@@ -76,6 +76,22 @@ public class ServiceTest {
         assertThat(booking.getSeats(), is(requestedSeats));
     }
 
+    @Test(expected = Exception.class)
+    public void shouldFailCreateBookingOnNegativeSeats() throws Exception {
+        insertDefaultEvent(service);
+        insertDefaultCustomer(service);
+
+        service.createBooking(defaultCustomer, defaultEvent, -1);
+    }
+
+    @Test(expected = Exception.class)
+    public void shouldFailCreateBookingOnZeroSeats() throws Exception {
+        insertDefaultEvent(service);
+        insertDefaultCustomer(service);
+
+        service.createBooking(defaultCustomer, defaultEvent, 0);
+    }
+
     @Test
     public void shouldShowAvailableSeatsAfterBooking() throws Exception {
         insertDefaultEvent(service);

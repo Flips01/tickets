@@ -78,7 +78,7 @@ public class Service implements Serializable {
             throw new Exception();
         }
 
-        if (getAvailableSeats(event) < requestedSeats) {
+        if (getAvailableSeats(event) < requestedSeats || requestedSeats <= 0) {
             throw new Exception();
         }
 
