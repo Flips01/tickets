@@ -45,7 +45,7 @@ public class Service implements Serializable {
 
         int usedSeats = 0;
         for (Booking booking : bookings) {
-            if (booking.getEvent().equals(event)) {
+            if (booking.getEvent().getId().equals(event.getId())) {
                 usedSeats += booking.getSeats();
             }
         }
@@ -69,7 +69,7 @@ public class Service implements Serializable {
 
     private boolean isRegisteredEvent(Event event) {
         for (Event e : events) {
-            if (e.equals(event)) {
+            if (e.getId().equals(event.getId())) {
                 return true;
             }
         }
@@ -112,7 +112,7 @@ public class Service implements Serializable {
         }
 
         for (Booking booking : bookings) {
-            if (booking.getEvent().equals(event) && booking.getCustomer().equals(customer)) {
+            if (booking.getEvent().getId().equals(event.getId()) && booking.getCustomer().equals(customer)) {
                 return booking;
             }
         }
