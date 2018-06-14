@@ -234,17 +234,6 @@ public class ServiceTest {
         assertThat(loadedService, is(service));
     }
 
-    @Test(expected = BlackListException.class)
-    public void shouldFailOnBlacklist() throws Exception {
-        BlackListService blackListService = mock(BlackListService.class);
-        when(blackListService.isCustomerBlacklisted(defaultCustomer)).thenReturn(true);
-        service.setBlacklistService(blackListService);
-        insertDefaultCustomer(service);
-        insertDefaultEvent(service);
-
-        service.createBooking(defaultCustomer, defaultEvent, defaultEvent.getSeating());
-    }
-
     @Test
     public void shouldQueryBlacklist() throws Exception {
         BlackListService blackListService = mock(BlackListService.class);
@@ -258,8 +247,19 @@ public class ServiceTest {
         verify(blackListService).isCustomerBlacklisted(defaultCustomer);
     }
 
+    @Test(expected = BlackListException.class)
+    public void shouldFailOnBlacklist() throws Exception {
+        BlackListService blackListService = mock(BlackListService.class);
+        when(blackListService.isCustomerBlacklisted(defaultCustomer)).thenReturn(true);
+        service.setBlacklistService(blackListService);
+        insertDefaultCustomer(service);
+        insertDefaultEvent(service);
+
+        service.createBooking(defaultCustomer, defaultEvent, defaultEvent.getSeating());
+    }
+
     @Test
-    public void shouldSendEmailOn10PercentSeats() throws Exception {
+    public void shouldSendEmailOnBookingsWithMoreThenTenPercentSeats() throws Exception {
         MailService mailService = mock(MailService.class);
         service.setMailService(mailService);
         insertDefaultCustomer(service);
@@ -268,6 +268,18 @@ public class ServiceTest {
         service.createBooking(defaultCustomer, defaultEvent, defaultEvent.getSeating());
 
         verify(mailService).sendMail(eq(defaultEvent.getOrganizerEmail()), anyString());
+    }
+
+    @Test
+    public void shouldNotSendEmailOnBookingsWithLessThenTenPercentSeats() throws Exception {
+        MailService mailService = mock(MailService.class);
+        service.setMailService(mailService);
+        insertDefaultCustomer(service);
+        insertDefaultEvent(service);
+
+        service.createBooking(defaultCustomer, defaultEvent, 1);
+
+        verify(mailService, never()).sendMail(anyString(), anyString());
     }
 
     private Event createDefaultEvent() {
