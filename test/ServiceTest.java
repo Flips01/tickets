@@ -62,7 +62,21 @@ public class ServiceTest {
     }
 
     @Test
-    public void shouldShowAvailableSeatsWithBooking() throws Exception {
+    public void shouldCreateBooking() throws Exception {
+        insertDefaultEvent(service);
+        insertDefaultCustomer(service);
+        int requestedSeats = 2;
+
+        Booking booking = service.createBooking(defaultCustomer, defaultEvent, requestedSeats);
+
+        assertThat(booking, is(not(nullValue())));
+        assertThat(booking.getCustomer(), is(defaultCustomer));
+        assertThat(booking.getEvent(), is(defaultEvent));
+        assertThat(booking.getSeats(), is(requestedSeats));
+    }
+
+    @Test
+    public void shouldShowAvailableSeatsAfterBooking() throws Exception {
         insertDefaultEvent(service);
         insertDefaultCustomer(service);
 
